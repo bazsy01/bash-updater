@@ -49,6 +49,8 @@ usage () {
 	echo "  -u USERNAME    YDNS username for authentication"
 	echo "  -p PASSWORD    YDNS password for authentication"
 	echo "  -i INTERFACE   Use the local IP address for the given interface"
+        echo "  -4             Use IPv4"
+        echo "  -6             Use IPv6"
 	echo "  -v             Display version"
 	echo "  -V             Enable verbose output"
 	exit 0
@@ -94,8 +96,9 @@ write_msg () {
 verbose=0
 local_interface_addr=
 custom_host=
+use_ipv6=0
 
-while getopts "hH:i:p:u:vV" opt; do
+while getopts "hH:i:p:u:46vV" opt; do
 	case $opt in
 		h)
 			usage
@@ -117,6 +120,13 @@ while getopts "hH:i:p:u:vV" opt; do
 			YDNS_USER=$OPTARG
 			;;
 
+                4)
+                        use_ipv6=0
+                        ;;
+                6)
+                        use_ipv6=1
+                        YDNS_LASTIP_FILE="${YDNS_LASTIP_FILE}_ipv6"
+                        ;;
 		v)
 			show_version
 			;;
@@ -142,7 +152,11 @@ fi
 
 if [ "$current_ip" = "" ]; then
 	# Retrieve current public IP address
-	current_ip=`curl --silent https://ydns.io/api/v1/ip`
+        if [ $use_ipv6 -eq 1 ]; then
+            current_ip=`curl -6 --silent https://ydns.io/api/v1/ip`
+        else
+            current_ip=`curl -4 --silent https://ydns.io/api/v1/ip`
+        fi
 
     if [ "$current_ip" = "" ]; then
         write_msg "Error: Unable to retrieve current public IP address." 2
