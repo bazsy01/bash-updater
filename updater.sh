@@ -167,11 +167,15 @@ fi
 write_msg "Current IP: $current_ip"
 
 # Get last known IP address that was stored locally
+last_ip=""
 if [ -f "$YDNS_LASTIP_FILE" ]; then
-	last_ip=`head -n 1 $YDNS_LASTIP_FILE`
-else
-	last_ip=""
+        # Check the age of the file
+        last_modification=$(($(date +%s) - $(date +%s -r "$YDNS_LASTIP_FILE")))
+        if [  $last_modification -lt 7200 ]; then
+            last_ip=`head -n 1 $YDNS_LASTIP_FILE`
+        fi
 fi
+
 
 if [ "$current_ip" != "$last_ip" ]; then
 	ret=$(update_ip_address)
